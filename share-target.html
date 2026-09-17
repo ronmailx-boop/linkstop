@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>LinkStop - שומר קישור</title>
+  <meta name="theme-color" content="#7367f0" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="src/icons/icon-192.png" />
+  <link rel="stylesheet" href="src/css/style.css" />
+</head>
+<body>
+  <main class="share-status">
+    <p id="share-message" role="status" aria-live="polite">שומר קישור...</p>
+  </main>
+
+  <script type="module">
+    import { extractSharedUrl, saveSharedLink, isValidHttpUrl } from "./src/js/share-handler.js";
+
+    const messageEl = document.getElementById("share-message");
+    const params = new URLSearchParams(window.location.search);
+    const sharedUrl = extractSharedUrl(params);
+
+    async function run() {
+      if (!sharedUrl || !isValidHttpUrl(sharedUrl)) {
+        messageEl.textContent = "לא נמצא קישור תקין בשיתוף";
+        return;
+      }
+
+      try {
+        await saveSharedLink(sharedUrl);
+      } catch {
+        // גם בכשל בשליפת מטא-דאטה, saveSharedLink כבר נופל חינה לשמירה מינימלית - כאן רק כשלים בלתי צפויים
+      } finally {
+        window.location.replace("index.html");
+      }
+    }
+
+    run();
+  </script>
+</body>
+</html>
