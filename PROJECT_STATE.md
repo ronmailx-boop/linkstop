@@ -20,8 +20,13 @@
 - [x] **הוחלט: מבנה שדות מינימלי ל-v1** — `url, title, image, description, source, created_at` בלבד, בלי תיוג/חיפוש/ארכוב כרגע
 
 ## Open Questions
-אין שאלות פתוחות מהתכנון. שאלות חדשות שעלו תוך כדי בנייה:
-- [ ] יש לכם פרויקט Supabase קיים, או שצריך להנחות איך ליצור אחד חדש?
+אין שאלות פתוחות.
+
+## Supabase (הושלם)
+- [x] נוצר פרויקט Supabase ייעודי בשם **linkstop** (ref: `ehqypnefrnpeoqulyeqm`, region: `eu-central-1`, org: `ronmailx-boop's Org`) - היה כבר פרויקט אחר בחשבון ("ronmailx-boop's Project"), המשתמש בחר ביצירת פרויקט חדש וייעודי
+- [x] נפרסה `supabase/functions/fetch-metadata` לפרויקט (status: ACTIVE, `verify_jwt: true`)
+- [x] `src/js/config.js` עודכן עם ה-URL וה-anon key האמיתיים של הפרויקט
+- [ ] **לא בוצעה בדיקת קצה-לקצה** בפועל לפונקציה - ניסיון `curl` מהסביבה נחסם על ידי מדיניות ה-egress proxy של סביבת הפיתוח (לא בעיה ברשת של Supabase או של המשתמש). **יש לבדוק ידנית** (מהדפדפן/מהאפליקציה באנדרואיד) שהקריאה ל-Edge Function מחזירה נתונים תקינים לפני שסומכים על כך שהחיבור עובד סוף-לסוף
 
 ## Build Log (v1)
 - [x] `index.html` — מסך הבית: טופס הוספת קישור ידני + רשימת כרטיסים
@@ -48,9 +53,9 @@ headless); לוגיקת `share-handler.js` (זיהוי URL מתוך share params
 ## Next Step (לפני שהאפליקציה שמישה בפועל)
 1. **לפרוס ל-GitHub Pages** מהריפו הזה (הגדרות → Pages → branch), ולוודא
    שהיא עולה תחת `/linkstop/`.
-2. **ליצור פרויקט Supabase** (אם אין כבר), לפרוס את `supabase/functions/fetch-metadata`
-   (`supabase functions deploy fetch-metadata`), ולמלא את `src/js/config.js`
-   עם ה-URL וה-anon key האמיתיים.
+2. **לבדוק את ה-Edge Function בפועל** (לא נבדק סוף-לסוף עדיין, ר' סעיף
+   Supabase למעלה) - למשל דרך הדבקת קישור באפליקציה אחרי הפריסה, ולוודא
+   שמתקבלת תצוגה מקדימה אמיתית ולא רק fallback לכותרת=URL.
 3. **לבדוק בפועל באנדרואיד**: התקנת PWA ("הוסף למסך הבית"), שיתוף קישור
    מוואטסאפ/פייסבוק/כרום, הוספה ידנית, מחיקה.
 4. לשקול שדרוג לוגו/אייקון בעתיד (סוכם כבסיסי בינתיים).
