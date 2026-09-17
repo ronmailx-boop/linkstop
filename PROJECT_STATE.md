@@ -1,9 +1,10 @@
 # PROJECT_STATE - LinkStop
 
 ## Current Focus
-שלב תכנון ארכיטקטורה ראשוני (טרם נכתב קוד אפליקציה). הוצגה למשתמש תוכנית מבנה
-תיקיות, סכימת `share_target`, ומיפוי היכן Supabase נדרש בהכרח מול היכן אפשר
-בלעדיו. ממתין לתשובות המשתמש לשאלות ההבהרה לפני תחילת בנייה בפועל.
+**גרסת v1 נבנתה במלואה לפי התוכנית המאושרת** (frontend + Edge Function +
+מסמכים משפטיים). האפליקציה עדיין לא נפרסה בפועל ל-GitHub Pages ולא חובר
+פרויקט Supabase אמיתי — אלו הצעדים הבאים. ראה "Next Step" למה שנשאר לבצע
+לפני שהאפליקציה שמישה בפועל על המכשיר.
 
 ## Decisions Made
 - [x] נקרא CLAUDE.md; עקרון האבטחה הותאם ל-Supabase (RLS policies במקום Firestore Rules) לפי הנחיית המשתמש
@@ -19,14 +20,41 @@
 - [x] **הוחלט: מבנה שדות מינימלי ל-v1** — `url, title, image, description, source, created_at` בלבד, בלי תיוג/חיפוש/ארכוב כרגע
 
 ## Open Questions
-כל שאלות ההבהרה נענו. ✅ מוכן לגבש Plan סופי מלא ולהציג לאישור מפורש.
+אין שאלות פתוחות מהתכנון. שאלות חדשות שעלו תוך כדי בנייה:
+- [ ] יש לכם פרויקט Supabase קיים, או שצריך להנחות איך ליצור אחד חדש?
 
-## Next Step
-להציג למשתמש Plan מפורט וסופי (רשימת קבצים מדויקת שייווצרו + תוכן manifest
-סופי + מבנה נתוני localStorage) ולקבל אישור מפורש **לפני** תחילת כתיבת קוד
-האפליקציה בפועל (לפי כלל ה-Plan ב-CLAUDE.md). לאחר אישור: להתחיל בבנייה
-בפועל ולעדכן משימות `[x]` כאן בזמן אמת.
+## Build Log (v1)
+- [x] `index.html` — מסך הבית: טופס הוספת קישור ידני + רשימת כרטיסים
+- [x] `share-target.html` — קליטת שיתוף מאנדרואיד (GET params) עם fallback ל-URL בתוך `text`
+- [x] `manifest.json` — כולל `share_target` (method GET), `scope`/`start_url` תחת `/linkstop/`, אייקונים
+- [x] `sw.js` — Service Worker מינימלי ל-installability בלבד (בלי offline caching מלא)
+- [x] `src/css/style.css` — עיצוב RTL, mobile-first, פלטת סגול
+- [x] `src/js/storage.js` — localStorage wrapper (get/add/delete)
+- [x] `src/js/metadata.js` — קריאה ל-Edge Function עם timeout ו-fallback ל-null בכשל
+- [x] `src/js/share-handler.js` — פרסור פרמטרים, זיהוי מקור (whatsapp/facebook/other), ולידציית URL (חוסם `javascript:` וכו')
+- [x] `src/js/app.js` — רנדור כרטיסים דרך DOM API (לא innerHTML, למניעת XSS), טופס הוספה, מחיקה עם אישור, רישום SW
+- [x] `src/js/config.js` — פלייסהולדר ל-`SUPABASE_FUNCTION_URL`/`SUPABASE_ANON_KEY` (**דורש מילוי אחרי יצירת הפרויקט**)
+- [x] `src/icons/icon-192.png`, `icon-512.png` — אייקון בסיסי זמני (סגול + סמל קישור לבן), maskable
+- [x] `supabase/functions/fetch-metadata/index.ts` — Edge Function: fetch + parse og:tags, הגנת SSRF בסיסית (חסימת רשתות פנימיות/לוקאליות), timeout, הגבלת גודל HTML
+- [x] `docs/legal/privacy-policy.md`, `terms-of-service.md`, `cookie-policy.md`, `accessibility-statement.md` — טיוטות עברית עם `[PLACEHOLDER]`
+
+**בדיקות שבוצעו:** האתר נטען ללא שגיאות קונסול/מודולים (נבדק דרך Chromium
+headless); לוגיקת `share-handler.js` (זיהוי URL מתוך share params, זיהוי
+מקור, ולידציית URL כולל חסימת `javascript:`) נבדקה ועברה ב-Node ישירות.
+**לא בוצעה** בדיקת אינטראקציה מלאה בדפדפן אמיתי (טופס/מחיקה/PWA install)
+מאחר שאין כלי Playwright/Puppeteer מותקן בסביבה זו — מומלץ לבדוק ידנית
+באנדרואיד אחרי הפריסה.
+
+## Next Step (לפני שהאפליקציה שמישה בפועל)
+1. **לפרוס ל-GitHub Pages** מהריפו הזה (הגדרות → Pages → branch), ולוודא
+   שהיא עולה תחת `/linkstop/`.
+2. **ליצור פרויקט Supabase** (אם אין כבר), לפרוס את `supabase/functions/fetch-metadata`
+   (`supabase functions deploy fetch-metadata`), ולמלא את `src/js/config.js`
+   עם ה-URL וה-anon key האמיתיים.
+3. **לבדוק בפועל באנדרואיד**: התקנת PWA ("הוסף למסך הבית"), שיתוף קישור
+   מוואטסאפ/פייסבוק/כרום, הוספה ידנית, מחיקה.
+4. לשקול שדרוג לוגו/אייקון בעתיד (סוכם כבסיסי בינתיים).
 
 ## Files Changed
-- `PROJECT_STATE.md` — נוצר (קובץ זה)
-- אין קבצי קוד נוספים שנוצרו/שונו בשלב זה
+- `PROJECT_STATE.md` — עודכן
+- כל קבצי v1 שנוצרו (ראה "Build Log" למעלה)

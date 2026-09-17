@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>LinkStop</title>
+  <meta name="description" content="ריכוז קישורים ששמרת מוואטסאפ, פייסבוק וכרום במקום אחד" />
+  <meta name="theme-color" content="#7367f0" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="src/icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="src/icons/icon-192.png" />
+  <link rel="stylesheet" href="src/css/style.css" />
+</head>
+<body>
+  <header class="app-header">
+    <h1 class="app-header__title">LinkStop</h1>
+  </header>
+
+  <main class="app-main">
+    <form id="add-link-form" class="add-link-form">
+      <label for="url-input" class="visually-hidden">הדבק קישור</label>
+      <input
+        id="url-input"
+        name="url"
+        type="url"
+        inputmode="url"
+        placeholder="הדבק קישור כאן..."
+        autocomplete="off"
+        required
+      />
+      <button id="add-button" type="submit">הוסף</button>
+    </form>
+    <p id="form-status" class="form-status" role="status" aria-live="polite"></p>
+
+    <p id="empty-state" class="empty-state" hidden>
+      עדיין לא שמרת קישורים. שתף קישור מוואטסאפ, פייסבוק או כרום ובחר ב-LinkStop, או הדבק קישור למעלה.
+    </p>
+
+    <ul id="links-list" class="links-list"></ul>
+  </main>
+
+  <script type="module" src="src/js/app.js"></script>
+</body>
+</html>
