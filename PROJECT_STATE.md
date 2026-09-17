@@ -50,9 +50,13 @@ headless); לוגיקת `share-handler.js` (זיהוי URL מתוך share params
 מאחר שאין כלי Playwright/Puppeteer מותקן בסביבה זו — מומלץ לבדוק ידנית
 באנדרואיד אחרי הפריסה.
 
+## GitHub Pages
+- [x] **הוחלט (לצמיתות): כל שינוי עתידי יעבור PR מהברנץ הייעודי ומוזג אוטומטית ל-`main`** - Pages תמיד תשרת מ-`main`. אין צורך לשאול שוב על כך בעתיד.
+- [x] PR #1 נפתח ומוזג ל-`main` (squash) - כל קוד ה-v1 נמצא כעת ב-`main`
+- [ ] **נדרשת פעולה חד-פעמית מהמשתמש** (אין ל-Claude כלי API להגדרות Pages): ב-GitHub → הריפו → **Settings → Pages → Build and deployment → Source: "Deploy from a branch" → Branch: `main`, תיקייה: `/ (root)` → Save**. לאחר מכן כל push עתידי ל-`main` יעדכן את האתר החי אוטומטית.
+
 ## Next Step (לפני שהאפליקציה שמישה בפועל)
-1. **לפרוס ל-GitHub Pages** מהריפו הזה (הגדרות → Pages → branch), ולוודא
-   שהיא עולה תחת `/linkstop/`.
+1. **המשתמש מבצע את הפעלת GitHub Pages** (חד-פעמי, ר' סעיף למעלה) ומוודא שהאתר עולה תחת `/linkstop/`.
 2. **לבדוק את ה-Edge Function בפועל** (לא נבדק סוף-לסוף עדיין, ר' סעיף
    Supabase למעלה) - למשל דרך הדבקת קישור באפליקציה אחרי הפריסה, ולוודא
    שמתקבלת תצוגה מקדימה אמיתית ולא רק fallback לכותרת=URL.
