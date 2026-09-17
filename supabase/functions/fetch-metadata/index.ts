@@ -90,7 +90,10 @@ Deno.serve(async (req) => {
       signal: controller.signal,
       redirect: "follow",
       headers: {
-        "User-Agent": "Mozilla/5.0 (compatible; LinkStopBot/1.0; +https://github.com/)",
+        // מזדהה כ-facebookexternalhit - הבוט הרשמי של פייסבוק ליצירת תצוגות מקדימה (זו הסיבה
+        // שתצוגה מקדימה עובדת בוואטסאפ/מסנג'ר). בלי זה, פייסבוק מחזיר דף "התחבר כדי לצפות"
+        // גנרי (לפי locale של ה-IP) במקום את ה-og:tags האמיתיים של הפוסט.
+        "User-Agent": "facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)",
         Accept: "text/html",
       },
     });
