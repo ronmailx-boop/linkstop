@@ -1,6 +1,7 @@
 import { SUPABASE_FUNCTION_URL, SUPABASE_ANON_KEY } from "./config.js";
 
-const FETCH_TIMEOUT_MS = 8000;
+// דפים כמו פייסבוק יכולים לשקול כמה מאות KB - טיימאאוט קצר מדי גורם לכשל שווא גם כשהשרת בסופו של דבר מצליח.
+const FETCH_TIMEOUT_MS = 12000;
 
 // שולף og:title / og:image / og:description מה-Edge Function של Supabase.
 // בכשל (רשת/שרת/timeout) מחזיר null במקום לזרוק - הקורא אחראי להציג הודעה בעברית וליפול חזרה לנתונים מינימליים.

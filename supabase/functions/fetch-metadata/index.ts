@@ -9,6 +9,7 @@ const CORS_HEADERS = {
 
 const FETCH_TIMEOUT_MS = 6000;
 const MAX_HTML_BYTES = 1_000_000;
+const RETRY_DELAY_MS = 500;
 
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -57,6 +58,75 @@ function extractTitleTag(html: string): string {
   return match ? decodeHtmlEntities(match[1].trim()) : "";
 }
 
+interface Metadata {
+  title: string;
+  description: string;
+  image: string;
+  siteName: string;
+}
+
+async function fetchAndExtract(targetUrl: string, hostname: string): Promise<Metadata> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+
+  try {
+    const pageResponse = await fetch(targetUrl, {
+      signal: controller.signal,
+      redirect: "follow",
+      headers: {
+        // מזדהה כ-facebookexternalhit - הבוט הרשמי של פייסבוק ליצירת תצוגות מקדימות (זו הסיבה
+        // שתצוגה מקדימה עובדת בוואטסאפ/מסנג'ר). בלי זה, פייסבוק עלול להחזיר דף "התחבר כדי לצפות".
+        "User-Agent": "facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)",
+        Accept: "text/html",
+      },
+    });
+
+    if (!pageResponse.ok) {
+      throw new Error(`upstream responded with ${pageResponse.status}`);
+    }
+
+    const contentType = pageResponse.headers.get("content-type") || "";
+    if (!contentType.includes("text/html")) {
+      throw new Error("target is not an html page");
+    }
+
+    const reader = pageResponse.body?.getReader();
+    let html = "";
+    let receivedBytes = 0;
+    const decoder = new TextDecoder();
+
+    if (reader) {
+      while (receivedBytes < MAX_HTML_BYTES) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        receivedBytes += value.length;
+        html += decoder.decode(value, { stream: true });
+        if (html.includes("</head>")) break; // ה-og:tags תמיד ב-head - אין טעם להמשיך לקרוא גוף עמוד של מאות KB
+      }
+      await reader.cancel().catch(() => {});
+    }
+
+    return {
+      title: extractMetaContent(html, "og:title") || extractTitleTag(html),
+      description: extractMetaContent(html, "og:description"),
+      image: extractMetaContent(html, "og:image"),
+      siteName: extractMetaContent(html, "og:site_name") || hostname,
+    };
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+// אתרים כמו פייסבוק מציגים לפעמים "שער" חסום/גנרי (בלי og:image ובלי og:description) כתוצאה
+// מהגנת אנטי-בוט שלהם, ובניסיון חוזר מיידי מקבלים לרוב תוכן תקין - לכן ניסיון שני קטן ל"תקלות" מהסוג הזה.
+function looksLikeBlockedPage(meta: Metadata): boolean {
+  return !meta.image && !meta.description;
+}
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: CORS_HEADERS });
@@ -82,55 +152,21 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: "host not allowed" }, 400);
   }
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
-
   try {
-    const pageResponse = await fetch(parsed.toString(), {
-      signal: controller.signal,
-      redirect: "follow",
-      headers: {
-        // מזדהה כ-facebookexternalhit - הבוט הרשמי של פייסבוק ליצירת תצוגות מקדימה (זו הסיבה
-        // שתצוגה מקדימה עובדת בוואטסאפ/מסנג'ר). בלי זה, פייסבוק מחזיר דף "התחבר כדי לצפות"
-        // גנרי (לפי locale של ה-IP) במקום את ה-og:tags האמיתיים של הפוסט.
-        "User-Agent": "facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)",
-        Accept: "text/html",
-      },
-    });
+    let meta = await fetchAndExtract(parsed.toString(), parsed.hostname);
 
-    if (!pageResponse.ok) {
-      return jsonResponse({ error: "failed to fetch target url" }, 502);
-    }
-
-    const contentType = pageResponse.headers.get("content-type") || "";
-    if (!contentType.includes("text/html")) {
-      return jsonResponse({ error: "target is not an html page" }, 415);
-    }
-
-    const reader = pageResponse.body?.getReader();
-    let html = "";
-    let receivedBytes = 0;
-    const decoder = new TextDecoder();
-
-    if (reader) {
-      while (receivedBytes < MAX_HTML_BYTES) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        receivedBytes += value.length;
-        html += decoder.decode(value, { stream: true });
+    if (looksLikeBlockedPage(meta)) {
+      await delay(RETRY_DELAY_MS);
+      try {
+        const retryMeta = await fetchAndExtract(parsed.toString(), parsed.hostname);
+        if (!looksLikeBlockedPage(retryMeta)) meta = retryMeta;
+      } catch {
+        // הניסיון הראשון כן הצליח חלקית - נשארים איתו במקום לזרוק שגיאה
       }
-      await reader.cancel().catch(() => {});
     }
 
-    const title = extractMetaContent(html, "og:title") || extractTitleTag(html);
-    const description = extractMetaContent(html, "og:description");
-    const image = extractMetaContent(html, "og:image");
-    const siteName = extractMetaContent(html, "og:site_name") || parsed.hostname;
-
-    return jsonResponse({ title, description, image, siteName });
+    return jsonResponse(meta);
   } catch {
     return jsonResponse({ error: "fetch timed out or failed" }, 504);
-  } finally {
-    clearTimeout(timeoutId);
   }
 });
