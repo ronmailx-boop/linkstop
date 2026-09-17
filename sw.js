@@ -1,6 +1,6 @@
 // Service Worker מינימלי - נדרש להתקנת ה-PWA (Add to Home Screen) ולתפריט השיתוף באנדרואיד.
 // לא מיועד ל-offline caching מלא של תוכן (הוחלט שאינו קריטי ל-v1).
-const CACHE_NAME = "linkstop-shell-v3";
+const CACHE_NAME = "linkstop-shell-v4";
 const APP_SHELL = [
   "/linkstop/index.html",
   "/linkstop/share-target.html",
