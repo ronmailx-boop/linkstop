@@ -1,6 +1,6 @@
 // Service Worker מינימלי - נדרש להתקנת ה-PWA (Add to Home Screen) ולתפריט השיתוף באנדרואיד.
 // לא מיועד ל-offline caching מלא של תוכן (הוחלט שאינו קריטי ל-v1).
-const CACHE_NAME = "linkstop-shell-v1";
+const CACHE_NAME = "linkstop-shell-v2";
 const APP_SHELL = [
   "/linkstop/index.html",
   "/linkstop/share-target.html",
@@ -30,10 +30,17 @@ self.addEventListener("activate", (event) => {
   );
 });
 
+// network-first: תמיד מנסה קודם רשת (כדי שעדכונים יגיעו מיד), ונופל למטמון רק כשאין רשת.
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
 
   event.respondWith(
-    caches.match(event.request).then((cached) => cached || fetch(event.request))
+    fetch(event.request)
+      .then((response) => {
+        const responseClone = response.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
+        return response;
+      })
+      .catch(() => caches.match(event.request))
   );
 });
