@@ -43,6 +43,12 @@ body {
   font-weight: 700;
 }
 
+.app-header__version {
+  margin: 4px 0 0;
+  font-size: 12px;
+  opacity: 0.75;
+}
+
 .app-main {
   padding: 16px;
   max-width: 640px;
