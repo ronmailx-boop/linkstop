@@ -34,7 +34,7 @@ PR #3). נותרו רק בדיקות נוספות באנדרואיד (התקנה
 - [x] `index.html` — מסך הבית: טופס הוספת קישור ידני + רשימת כרטיסים
 - [x] `share-target.html` — קליטת שיתוף מאנדרואיד (GET params) עם fallback ל-URL בתוך `text`
 - [x] `manifest.json` — כולל `share_target` (method GET), `scope`/`start_url` תחת `/linkstop/`, אייקונים
-- [x] `sw.js` — Service Worker מינימלי ל-installability בלבד (בלי offline caching מלא)
+- [x] `sw.js` — Service Worker מינימלי ל-installability בלבד. **חשוב:** אסטרטגיית fetch היא **network-first** (לא cache-first!) - שונה מהגרסה המקורית אחרי שהתגלה שקאש-פירסט חוסם כל עדכון עתידי מלהגיע למשתמשים שכבר ביקרו באתר (ר' PR #6). כל שינוי עתידי ב-`CACHE_NAME` (`linkstop-shell-vN`) ינקה קאש ישן.
 - [x] `src/css/style.css` — עיצוב RTL, mobile-first, פלטת סגול
 - [x] `src/js/storage.js` — localStorage wrapper (get/add/delete)
 - [x] `src/js/metadata.js` — קריאה ל-Edge Function עם timeout ו-fallback ל-null בכשל
@@ -54,9 +54,10 @@ headless); לוגיקת `share-handler.js` (זיהוי URL מתוך share params
 
 ## GitHub Pages (חי)
 - [x] **הוחלט (לצמיתות): כל שינוי עתידי יעבור PR מהברנץ הייעודי ומוזג אוטומטית ל-`main`** (עם merge commit רגיל, לא squash - כדי למנוע קונפליקטים חוזרים בין הברנץ הייעודי ל-`main`) - Pages תמיד תשרת מ-`main`. אין צורך לשאול שוב על כך בעתיד.
-- [x] PR #1, #2, #3 נפתחו ומוזגו ל-`main` - כל קוד ה-v1 (כולל תיקון הבאג) נמצא ב-`main`
+- [x] PR #1–#6 נפתחו ומוזגו ל-`main` - כל קוד ה-v1 (כולל תיקוני הבאגים) נמצא ב-`main`
 - [x] המשתמש הפעיל את GitHub Pages (Source: Deploy from a branch → `main` → root) **והאתר חי ועובד** ב-`https://ronmailx-boop.github.io/linkstop/`
 - [x] המשתמש גם אישר שהוא הפעיל הרשאת GitHub Actions כללית בריפו - לא סותר ולא משפיע על Pages (אין workflow files בריפו כרגע)
+- [x] **נמצא ותוקן באג משמעותי**: ה-Service Worker הגיש קבצים ב-cache-first, כך שעדכון CSS (PR #5, הסרת קיצוץ הכותרת) לא הגיע בפועל למשתמש למרות שהקוד היה נכון ב-`main`. תוקן ל-network-first ב-PR #6. **לקח לזיכרון:** אחרי כל שינוי עתידי ב-CSS/JS, ודא שהמשתמש רואה את זה בפועל (רענון פשוט) ולא להניח שזה עבד רק כי הקוד נכון ב-`main`.
 
 ## Next Step (לא חוסמים - שיפורים עתידיים)
 1. **לבדוק בפועל באנדרואיד**: התקנת PWA ("הוסף למסך הבית"), שיתוף קישור
