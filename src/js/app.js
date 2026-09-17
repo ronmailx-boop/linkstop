@@ -118,8 +118,22 @@ formEl.addEventListener("submit", async (event) => {
 });
 
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("/linkstop/sw.js").catch(() => {
-    // התקנת PWA לא קריטית לפעולת האפליקציה - כשל בהרשמה לא צריך לחסום שימוש
+  // updateViaCache: "none" מבטיח שבדיקת עדכון ל-sw.js עצמו תמיד תעקוף את מטמון ה-HTTP.
+  navigator.serviceWorker
+    .register("/linkstop/sw.js", { updateViaCache: "none" })
+    .then((registration) => {
+      registration.update();
+    })
+    .catch(() => {
+      // התקנת PWA לא קריטית לפעולת האפליקציה - כשל בהרשמה לא צריך לחסום שימוש
+    });
+
+  // ברגע שגרסה חדשה של ה-Service Worker משתלטת, נטען מחדש פעם אחת כדי שכל הקבצים יתעדכנו מיד.
+  let reloadedOnce = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (reloadedOnce) return;
+    reloadedOnce = true;
+    window.location.reload();
   });
 }
 
