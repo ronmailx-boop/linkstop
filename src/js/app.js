@@ -1,4 +1,4 @@
-import { getLinks, deleteLink } from "./storage.js";
+import { getLinks, deleteLink, updateLink } from "./storage.js";
 import { saveSharedLink, isValidHttpUrl } from "./share-handler.js";
 
 const SOURCE_LABELS = {
@@ -22,58 +22,121 @@ function hostnameOf(url) {
   }
 }
 
-function buildCard(link) {
-  const card = document.createElement("li");
-  card.className = "link-card";
+// כשאין כותרת/תמונה אמיתיות (חילוץ אוטומטי נכשל, למשל בגלל הגנת אנטי-בוט של האתר),
+// אפשר לערוך את הכותרת ידנית - נשמר בלינק הנוכחי הזה בלבד עד שהמשתמש ילחץ על עריכה.
+let editingId = null;
 
-  const openLink = document.createElement("a");
-  openLink.className = "link-card__open";
-  openLink.href = link.url;
-  openLink.target = "_blank";
-  openLink.rel = "noopener noreferrer";
-
+function buildThumbnail(link) {
   if (link.image && isValidHttpUrl(link.image)) {
     const img = document.createElement("img");
     img.className = "link-card__thumb";
     img.src = link.image;
     img.alt = "";
     img.loading = "lazy";
-    openLink.appendChild(img);
-  } else {
-    const placeholder = document.createElement("div");
-    placeholder.className = "link-card__thumb link-card__thumb--placeholder";
-    placeholder.setAttribute("aria-hidden", "true");
-    openLink.appendChild(placeholder);
+    return img;
   }
+
+  const placeholder = document.createElement("div");
+  placeholder.className = "link-card__thumb link-card__thumb--placeholder";
+  placeholder.setAttribute("aria-hidden", "true");
+  return placeholder;
+}
+
+function buildCard(link) {
+  const card = document.createElement("li");
+  card.className = "link-card";
+
+  const isEditing = editingId === link.id;
+
+  const wrapper = document.createElement(isEditing ? "div" : "a");
+  wrapper.className = "link-card__open";
+  if (!isEditing) {
+    wrapper.href = link.url;
+    wrapper.target = "_blank";
+    wrapper.rel = "noopener noreferrer";
+  }
+  wrapper.appendChild(buildThumbnail(link));
 
   const info = document.createElement("div");
   info.className = "link-card__info";
-
-  const title = document.createElement("p");
-  title.className = "link-card__title";
-  title.textContent = link.title;
 
   const meta = document.createElement("p");
   meta.className = "link-card__meta";
   const sourceLabel = SOURCE_LABELS[link.source] || SOURCE_LABELS.other;
   meta.textContent = `${sourceLabel} · ${hostnameOf(link.url)}`;
 
-  info.append(title, meta);
-  openLink.appendChild(info);
+  if (isEditing) {
+    const form = document.createElement("form");
+    form.className = "link-card__edit-form";
 
-  const deleteButton = document.createElement("button");
-  deleteButton.type = "button";
-  deleteButton.className = "link-card__delete";
-  deleteButton.setAttribute("aria-label", `מחק את הקישור ${link.title}`);
-  deleteButton.textContent = "🗑";
-  deleteButton.addEventListener("click", () => {
-    if (confirm("למחוק את הקישור הזה?")) {
-      deleteLink(link.id);
+    const titleInput = document.createElement("input");
+    titleInput.type = "text";
+    titleInput.className = "link-card__title-input";
+    titleInput.value = link.title;
+    titleInput.setAttribute("aria-label", "כותרת הקישור");
+
+    const saveButton = document.createElement("button");
+    saveButton.type = "submit";
+    saveButton.className = "link-card__icon-button";
+    saveButton.setAttribute("aria-label", "שמור כותרת");
+    saveButton.textContent = "✓";
+
+    const cancelButton = document.createElement("button");
+    cancelButton.type = "button";
+    cancelButton.className = "link-card__icon-button";
+    cancelButton.setAttribute("aria-label", "בטל עריכה");
+    cancelButton.textContent = "✕";
+    cancelButton.addEventListener("click", () => {
+      editingId = null;
       render();
-    }
-  });
+    });
 
-  card.append(openLink, deleteButton);
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const newTitle = titleInput.value.trim();
+      if (newTitle) updateLink(link.id, { title: newTitle });
+      editingId = null;
+      render();
+    });
+
+    form.append(titleInput, saveButton, cancelButton);
+    info.append(form, meta);
+  } else {
+    const title = document.createElement("p");
+    title.className = "link-card__title";
+    title.textContent = link.title;
+    info.append(title, meta);
+  }
+
+  wrapper.appendChild(info);
+  card.appendChild(wrapper);
+
+  if (!isEditing) {
+    const editButton = document.createElement("button");
+    editButton.type = "button";
+    editButton.className = "link-card__icon-button";
+    editButton.setAttribute("aria-label", `ערוך כותרת ל${link.title}`);
+    editButton.textContent = "✏️";
+    editButton.addEventListener("click", () => {
+      editingId = link.id;
+      render();
+    });
+    card.appendChild(editButton);
+
+    const deleteButton = document.createElement("button");
+    deleteButton.type = "button";
+    deleteButton.className = "link-card__delete";
+    deleteButton.setAttribute("aria-label", `מחק את הקישור ${link.title}`);
+    deleteButton.textContent = "🗑";
+    deleteButton.addEventListener("click", () => {
+      if (confirm("למחוק את הקישור הזה?")) {
+        deleteLink(link.id);
+        render();
+      }
+    });
+    card.appendChild(deleteButton);
+  }
+
   return card;
 }
 
@@ -85,6 +148,14 @@ function render() {
 
   for (const link of links) {
     listEl.appendChild(buildCard(link));
+  }
+
+  if (editingId) {
+    const input = listEl.querySelector(".link-card__title-input");
+    if (input) {
+      input.focus();
+      input.select();
+    }
   }
 }
 
