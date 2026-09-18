@@ -65,6 +65,40 @@ interface Metadata {
   siteName: string;
 }
 
+const YOUTUBE_HOSTS = ["youtube.com", "youtu.be", "m.youtube.com", "youtube-nocookie.com"];
+
+function isYouTubeHost(hostname: string): boolean {
+  const lower = hostname.toLowerCase().replace(/^www\./, "");
+  return YOUTUBE_HOSTS.some((host) => lower === host || lower.endsWith(`.${host}`));
+}
+
+// יוטיוב חוסם/מסנן לעיתים og:tags לפי User-Agent (עמוד הסכמת עוגיות גנרי, בעיקר מ-IP אירופאי -
+// הפונקציה רצה ב-eu-central-1) - ה-oEmbed הרשמי שלהם הוא ערוץ יציב ורשמי לכותרת + תמונת פריוויו.
+async function fetchYouTubeOEmbed(targetUrl: string): Promise<Metadata | null> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+
+  try {
+    const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(targetUrl)}&format=json`;
+    const response = await fetch(oembedUrl, { signal: controller.signal });
+    if (!response.ok) return null;
+
+    const data = await response.json();
+    if (!data.title) return null;
+
+    return {
+      title: data.title,
+      description: "",
+      image: data.thumbnail_url || "",
+      siteName: "YouTube",
+    };
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 async function fetchAndExtract(targetUrl: string, hostname: string): Promise<Metadata> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
@@ -153,15 +187,19 @@ Deno.serve(async (req) => {
   }
 
   try {
-    let meta = await fetchAndExtract(parsed.toString(), parsed.hostname);
+    let meta: Metadata | null = isYouTubeHost(parsed.hostname) ? await fetchYouTubeOEmbed(parsed.toString()) : null;
 
-    if (looksLikeBlockedPage(meta)) {
-      await delay(RETRY_DELAY_MS);
-      try {
-        const retryMeta = await fetchAndExtract(parsed.toString(), parsed.hostname);
-        if (!looksLikeBlockedPage(retryMeta)) meta = retryMeta;
-      } catch {
-        // הניסיון הראשון כן הצליח חלקית - נשארים איתו במקום לזרוק שגיאה
+    if (!meta) {
+      meta = await fetchAndExtract(parsed.toString(), parsed.hostname);
+
+      if (looksLikeBlockedPage(meta)) {
+        await delay(RETRY_DELAY_MS);
+        try {
+          const retryMeta = await fetchAndExtract(parsed.toString(), parsed.hostname);
+          if (!looksLikeBlockedPage(retryMeta)) meta = retryMeta;
+        } catch {
+          // הניסיון הראשון כן הצליח חלקית - נשארים איתו במקום לזרוק שגיאה
+        }
       }
     }
 

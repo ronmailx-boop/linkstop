@@ -71,7 +71,14 @@ headless); לוגיקת `share-handler.js` (זיהוי URL מתוך share params
    מוואטסאפ/פייסבוק/כרום (לא רק כרום ידני), מחיקה.
 2. לשקול שדרוג לוגו/אייקון בעתיד (סוכם כבסיסי בינתיים).
 3. למלא בהמשך את ה-`[PLACEHOLDER]` במסמכים המשפטיים (`docs/legal/`) בפרטים אמיתיים (אימייל ליצירת קשר וכו') לפני שהאפליקציה יוצאת לשימוש רחב.
-4. **בכל commit עתידי: להעלות את מספר "גרסה N" ב-`index.html`, ללא יוצא מן הכלל** - גם בשינויים שנראים "backend-only" (כמו Edge Function) וגם דיפלוי-דיבוג זמני. המשתמש ביקש זאת מפורשות; אל תנסה לשקול "אם זה רלוונטי" - פשוט להעלות בכל commit/deploy. גרסה נוכחית: **8**.
+4. **בכל commit עתידי: להעלות את מספר "גרסה N" ב-`index.html`, ללא יוצא מן הכלל** - גם בשינויים שנראים "backend-only" (כמו Edge Function) וגם דיפלוי-דיבוג זמני. המשתמש ביקש זאת מפורשות; אל תנסה לשקול "אם זה רלוונטי" - פשוט להעלות בכל commit/deploy. גרסה נוכחית: **9**.
+
+## YouTube — כותרת ותמונה לשיתופים (2026-09-18)
+- [x] **זוהתה הסיבה**: קישורי `youtube.com/watch?...` נשמרו בלי כותרת/תמונה (רק URL גולמי + ריבוע סגול ריק) - הפונקציה `fetch-metadata` שולפת og:tags דרך scraping רגיל עם User-Agent מזויף של `facebookexternalhit`, ויוטיוב לא בהכרח מחזיר עבורו את ה-og:tags המלאים (יכול להחזיר דף הסכמת עוגיות גנרי, בעיקר מ-IP אירופאי - הפונקציה רצה ב-`eu-central-1`).
+- [x] **תוקן**: נוסף ערוץ ייעודי ל-`supabase/functions/fetch-metadata/index.ts` - לפני ה-scraping הרגיל, אם ה-hostname הוא יוטיוב (`youtube.com`/`youtu.be`/`m.youtube.com`/`youtube-nocookie.com`), הפונקציה קוראת ל-**oEmbed הרשמי של יוטיוב** (`https://www.youtube.com/oembed?url=...&format=json`) ומקבלת `title` + `thumbnail_url` ישירות מיוטיוב - ערוץ יציב ורשמי, בלי תלות ב-scraping/User-Agent. נופל חזרה ל-scraping הרגיל אם ה-oEmbed נכשל.
+- [x] נפרס ל-Supabase כגרסה v10 (`mcp__Supabase__deploy_edge_function`).
+- [x] הועלה מספר גרסה ב-`index.html` מ-8 ל-**9**.
+- [ ] **לא בוצעה בדיקת קצה-לקצה בדפדפן/אנדרואיד** - אין גישת רשת יוצאת ל-Supabase מסביבת הפיתוח הזו (agent proxy חוסם, כנראה גם ל-`youtube.com` עצמו). יש לבדוק בפועל אחרי המיזוג: הדבקת קישור `youtube.com/watch?...` באתר החי ווידוא שמופיעים כותרת סרטון אמיתית ותמונת פריוויו.
 
 ## Files Changed
 - `PROJECT_STATE.md` — עודכן
