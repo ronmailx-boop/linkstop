@@ -14,6 +14,53 @@ const inputEl = document.getElementById("url-input");
 const addButtonEl = document.getElementById("add-button");
 const statusEl = document.getElementById("form-status");
 
+const confirmOverlayEl = document.getElementById("confirm-overlay");
+const confirmMessageEl = document.getElementById("confirm-dialog-message");
+const confirmCancelEl = document.getElementById("confirm-dialog-cancel");
+const confirmConfirmEl = document.getElementById("confirm-dialog-confirm");
+
+// תצוגת אישור מותאמת במקום confirm() הגנרי של הדפדפן - שומרת על מי שהיה בפוקוס
+// לפני הפתיחה ומחזירה אליו בסגירה, ותומכת בביטול דרך Escape/לחיצה על הרקע.
+function confirmDialog(message) {
+  return new Promise((resolve) => {
+    const previouslyFocused = document.activeElement;
+    confirmMessageEl.textContent = message;
+    confirmOverlayEl.hidden = false;
+    confirmCancelEl.focus();
+
+    function close(result) {
+      confirmOverlayEl.hidden = true;
+      confirmConfirmEl.removeEventListener("click", onConfirm);
+      confirmCancelEl.removeEventListener("click", onCancel);
+      confirmOverlayEl.removeEventListener("click", onOverlayClick);
+      confirmOverlayEl.removeEventListener("keydown", onKeydown);
+      if (previouslyFocused instanceof HTMLElement) previouslyFocused.focus();
+      resolve(result);
+    }
+
+    function onConfirm() {
+      close(true);
+    }
+
+    function onCancel() {
+      close(false);
+    }
+
+    function onOverlayClick(event) {
+      if (event.target === confirmOverlayEl) close(false);
+    }
+
+    function onKeydown(event) {
+      if (event.key === "Escape") close(false);
+    }
+
+    confirmConfirmEl.addEventListener("click", onConfirm);
+    confirmCancelEl.addEventListener("click", onCancel);
+    confirmOverlayEl.addEventListener("click", onOverlayClick);
+    confirmOverlayEl.addEventListener("keydown", onKeydown);
+  });
+}
+
 function hostnameOf(url) {
   try {
     return new URL(url).hostname.replace(/^www\./, "");
@@ -128,8 +175,9 @@ function buildCard(link) {
     deleteButton.className = "link-card__delete";
     deleteButton.setAttribute("aria-label", `מחק את הקישור ${link.title}`);
     deleteButton.textContent = "🗑";
-    deleteButton.addEventListener("click", () => {
-      if (confirm("למחוק את הקישור הזה?")) {
+    deleteButton.addEventListener("click", async () => {
+      const confirmed = await confirmDialog(`למחוק את "${link.title}"?`);
+      if (confirmed) {
         deleteLink(link.id);
         render();
       }
