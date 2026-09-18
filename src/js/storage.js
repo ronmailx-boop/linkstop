@@ -34,3 +34,11 @@ export function deleteLink(id) {
   const links = getLinks().filter((link) => link.id !== id);
   saveLinks(links);
 }
+
+export function updateLink(id, changes) {
+  const links = getLinks();
+  const index = links.findIndex((link) => link.id === id);
+  if (index === -1) return;
+  links[index] = { ...links[index], ...changes };
+  saveLinks(links);
+}
