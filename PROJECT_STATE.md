@@ -1,14 +1,13 @@
 # PROJECT_STATE - LinkStop
 
 ## Current Focus
-**גרסת v1 חיה, עובדת, ומאומתת קצה-לקצה בפועל אצל המשתמש** (2026-09-17,
-"גרסה 3"). האתר פרוס ב-GitHub Pages, מחובר לפרויקט Supabase (`linkstop`),
-כותרות עבריות ואנגליות מוצגות מלאות ונכונות. עברנו סבב דיבוג ארוך שבו
-התברר ש-**Pages Source הוחלף בטעות ל-"GitHub Actions" ותקע את כל הפריסות
-במשך כשעה** (לא היה קשור בכלל ל-Service Worker/מטמון כפי שחשדנו קודם) -
-ר' סעיף "GitHub Pages" למטה לפרטים ולקח חשוב לעתיד. נותרו רק בדיקות
-נוספות באנדרואיד (התקנה, שיתוף) ומשימות עתידיות לא-חוסמות (שדרוג לוגו,
-מילוי placeholders במסמכים המשפטיים).
+**גרסת v1 חיה, עובדת, ומאומתת קצה-לקצה בפועל אצל המשתמש** (2026-09-18,
+"גרסה 9"). האתר פרוס ב-GitHub Pages, מחובר לפרויקט Supabase (`linkstop`),
+כותרות עבריות ואנגליות מוצגות מלאות ונכונות. **קישורי יוטיוב מקבלים כעת
+כותרת ותמונת פריוויו אמיתיות דרך YouTube oEmbed** (ר' סעיף "YouTube"
+למטה) - אושר על ידי המשתמש בפועל. נותרו רק בדיקות נוספות באנדרואיד
+(התקנה, שיתוף) ומשימות עתידיות לא-חוסמות (שדרוג לוגו, מילוי
+placeholders במסמכים המשפטיים).
 
 ## Decisions Made
 - [x] נקרא CLAUDE.md; עקרון האבטחה הותאם ל-Supabase (RLS policies במקום Firestore Rules) לפי הנחיית המשתמש
@@ -78,7 +77,8 @@ headless); לוגיקת `share-handler.js` (זיהוי URL מתוך share params
 - [x] **תוקן**: נוסף ערוץ ייעודי ל-`supabase/functions/fetch-metadata/index.ts` - לפני ה-scraping הרגיל, אם ה-hostname הוא יוטיוב (`youtube.com`/`youtu.be`/`m.youtube.com`/`youtube-nocookie.com`), הפונקציה קוראת ל-**oEmbed הרשמי של יוטיוב** (`https://www.youtube.com/oembed?url=...&format=json`) ומקבלת `title` + `thumbnail_url` ישירות מיוטיוב - ערוץ יציב ורשמי, בלי תלות ב-scraping/User-Agent. נופל חזרה ל-scraping הרגיל אם ה-oEmbed נכשל.
 - [x] נפרס ל-Supabase כגרסה v10 (`mcp__Supabase__deploy_edge_function`).
 - [x] הועלה מספר גרסה ב-`index.html` מ-8 ל-**9**.
-- [ ] **לא בוצעה בדיקת קצה-לקצה בדפדפן/אנדרואיד** - אין גישת רשת יוצאת ל-Supabase מסביבת הפיתוח הזו (agent proxy חוסם, כנראה גם ל-`youtube.com` עצמו). יש לבדוק בפועל אחרי המיזוג: הדבקת קישור `youtube.com/watch?...` באתר החי ווידוא שמופיעים כותרת סרטון אמיתית ותמונת פריוויו.
+- [x] **מוזג ל-`main` (PR #19, merge commit `8a5604f`)**, Pages deployment רץ אוטומטית והצליח (מאשר ש-Source עדיין "Deploy from a branch", לא הוחלף בטעות ל-"GitHub Actions").
+- [x] **בדיקת קצה-לקצה אושרה על ידי המשתמש בפועל** - קישור יוטיוב חדש נשמר עם כותרת סרטון אמיתית ותמונת פריוויו. הפיצ'ר עובד.
 
 ## Files Changed
 - `PROJECT_STATE.md` — עודכן
