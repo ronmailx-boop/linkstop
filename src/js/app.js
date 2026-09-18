@@ -1,4 +1,4 @@
-import { getLinks, deleteLink, updateLink } from "./storage.js";
+import { getLinks, deleteLink, deleteLinks, updateLink } from "./storage.js";
 import { saveSharedLink, isValidHttpUrl } from "./share-handler.js";
 
 const SOURCE_LABELS = {
@@ -15,6 +15,13 @@ const addButtonEl = document.getElementById("add-button");
 const statusEl = document.getElementById("form-status");
 const searchBarEl = document.getElementById("search-bar");
 const searchInputEl = document.getElementById("search-input");
+const listToolbarEl = document.getElementById("list-toolbar");
+const selectionEnterEl = document.getElementById("selection-enter");
+const selectionBarEl = document.getElementById("selection-bar");
+const selectionSelectAllEl = document.getElementById("selection-select-all");
+const selectionCountEl = document.getElementById("selection-count");
+const selectionCancelEl = document.getElementById("selection-cancel");
+const selectionDeleteEl = document.getElementById("selection-delete");
 
 const EMPTY_MESSAGE_DEFAULT = emptyStateEl.textContent.trim();
 const EMPTY_MESSAGE_NO_RESULTS = "לא נמצאו קישורים התואמים לחיפוש";
@@ -86,6 +93,16 @@ function filterLinks(links, term) {
   return links.filter((link) => `${link.title} ${hostnameOf(link.url)}`.toLowerCase().includes(query));
 }
 
+// מחיקה מרובה: בוחרים כמה קישורים דרך תיבות סימון ומוחקים את כולם יחד.
+let selectionMode = false;
+let selectedIds = new Set();
+
+function toggleSelection(id) {
+  if (selectedIds.has(id)) selectedIds.delete(id);
+  else selectedIds.add(id);
+  render();
+}
+
 function buildThumbnail(link) {
   if (link.image && isValidHttpUrl(link.image)) {
     const img = document.createElement("img");
@@ -106,14 +123,27 @@ function buildCard(link) {
   const card = document.createElement("li");
   card.className = "link-card";
 
-  const isEditing = editingId === link.id;
+  if (selectionMode) {
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.className = "link-card__checkbox";
+    checkbox.checked = selectedIds.has(link.id);
+    checkbox.setAttribute("aria-label", `בחר את ${link.title}`);
+    checkbox.addEventListener("change", () => toggleSelection(link.id));
+    card.appendChild(checkbox);
+  }
 
-  const wrapper = document.createElement(isEditing ? "div" : "a");
+  const isEditing = !selectionMode && editingId === link.id;
+
+  const wrapper = document.createElement(isEditing || selectionMode ? "div" : "a");
   wrapper.className = "link-card__open";
-  if (!isEditing) {
+  if (!isEditing && !selectionMode) {
     wrapper.href = link.url;
     wrapper.target = "_blank";
     wrapper.rel = "noopener noreferrer";
+  }
+  if (selectionMode) {
+    wrapper.addEventListener("click", () => toggleSelection(link.id));
   }
   wrapper.appendChild(buildThumbnail(link));
 
@@ -171,7 +201,7 @@ function buildCard(link) {
   wrapper.appendChild(info);
   card.appendChild(wrapper);
 
-  if (!isEditing) {
+  if (!isEditing && !selectionMode) {
     const editButton = document.createElement("button");
     editButton.type = "button";
     editButton.className = "link-card__icon-button";
@@ -207,8 +237,17 @@ function render() {
   listEl.innerHTML = "";
 
   searchBarEl.hidden = allLinks.length === 0;
+  listToolbarEl.hidden = allLinks.length === 0 || selectionMode;
+  selectionBarEl.hidden = !selectionMode;
   emptyStateEl.hidden = links.length > 0;
   emptyStateEl.textContent = allLinks.length === 0 ? EMPTY_MESSAGE_DEFAULT : EMPTY_MESSAGE_NO_RESULTS;
+
+  if (selectionMode) {
+    const visibleIds = links.map((link) => link.id);
+    selectionSelectAllEl.checked = visibleIds.length > 0 && visibleIds.every((id) => selectedIds.has(id));
+    selectionCountEl.textContent = selectedIds.size > 0 ? `${selectedIds.size} נבחרו` : "";
+    selectionDeleteEl.disabled = selectedIds.size === 0;
+  }
 
   for (const link of links) {
     listEl.appendChild(buildCard(link));
@@ -255,6 +294,43 @@ formEl.addEventListener("submit", async (event) => {
 searchInputEl.addEventListener("input", () => {
   searchTerm = searchInputEl.value;
   render();
+});
+
+selectionEnterEl.addEventListener("click", () => {
+  selectionMode = true;
+  selectedIds.clear();
+  editingId = null;
+  render();
+});
+
+selectionCancelEl.addEventListener("click", () => {
+  selectionMode = false;
+  selectedIds.clear();
+  render();
+});
+
+selectionSelectAllEl.addEventListener("change", () => {
+  const visibleIds = filterLinks(getLinks(), searchTerm).map((link) => link.id);
+  if (selectionSelectAllEl.checked) {
+    visibleIds.forEach((id) => selectedIds.add(id));
+  } else {
+    visibleIds.forEach((id) => selectedIds.delete(id));
+  }
+  render();
+});
+
+selectionDeleteEl.addEventListener("click", async () => {
+  const count = selectedIds.size;
+  if (count === 0) return;
+
+  const message = count === 1 ? "למחוק קישור אחד?" : `למחוק ${count} קישורים?`;
+  const confirmed = await confirmDialog(message);
+  if (confirmed) {
+    deleteLinks([...selectedIds]);
+    selectionMode = false;
+    selectedIds.clear();
+    render();
+  }
 });
 
 if ("serviceWorker" in navigator) {

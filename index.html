@@ -14,7 +14,7 @@
 <body>
   <header class="app-header">
     <h1 class="app-header__title">LinkStop</h1>
-    <p class="app-header__version">גרסה 14</p>
+    <p class="app-header__version">גרסה 15</p>
   </header>
 
   <main class="app-main">
@@ -42,6 +42,22 @@
         placeholder="חפש קישור..."
         autocomplete="off"
       />
+    </div>
+
+    <div id="list-toolbar" class="list-toolbar" hidden>
+      <button id="selection-enter" type="button" class="list-toolbar__link-button">בחירה מרובה</button>
+    </div>
+
+    <div id="selection-bar" class="selection-bar" hidden>
+      <label class="selection-bar__select-all">
+        <input id="selection-select-all" type="checkbox" />
+        בחר הכל
+      </label>
+      <span id="selection-count" class="selection-bar__count" role="status" aria-live="polite"></span>
+      <div class="selection-bar__actions">
+        <button id="selection-cancel" type="button" class="confirm-dialog__button confirm-dialog__button--ghost">ביטול</button>
+        <button id="selection-delete" type="button" class="confirm-dialog__button confirm-dialog__button--danger" disabled>מחק</button>
+      </div>
     </div>
 
     <p id="empty-state" class="empty-state" hidden>

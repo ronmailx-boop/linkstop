@@ -35,6 +35,12 @@ export function deleteLink(id) {
   saveLinks(links);
 }
 
+export function deleteLinks(ids) {
+  const idSet = new Set(ids);
+  const links = getLinks().filter((link) => !idSet.has(link.id));
+  saveLinks(links);
+}
+
 export function updateLink(id, changes) {
   const links = getLinks();
   const index = links.findIndex((link) => link.id === id);
