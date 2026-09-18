@@ -14,7 +14,7 @@
 <body>
   <header class="app-header">
     <h1 class="app-header__title">LinkStop</h1>
-    <p class="app-header__version">גרסה 12</p>
+    <p class="app-header__version">גרסה 13</p>
   </header>
 
   <main class="app-main">
@@ -39,6 +39,23 @@
 
     <ul id="links-list" class="links-list"></ul>
   </main>
+
+  <div id="confirm-overlay" class="confirm-overlay" hidden>
+    <div
+      class="confirm-dialog"
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby="confirm-dialog-title"
+      aria-describedby="confirm-dialog-message"
+    >
+      <p id="confirm-dialog-title" class="confirm-dialog__title">מחיקת קישור</p>
+      <p id="confirm-dialog-message" class="confirm-dialog__message"></p>
+      <div class="confirm-dialog__actions">
+        <button id="confirm-dialog-cancel" type="button" class="confirm-dialog__button confirm-dialog__button--ghost">ביטול</button>
+        <button id="confirm-dialog-confirm" type="button" class="confirm-dialog__button confirm-dialog__button--danger">מחק</button>
+      </div>
+    </div>
+  </div>
 
   <script type="module" src="src/js/app.js"></script>
 </body>

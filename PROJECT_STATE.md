@@ -101,6 +101,15 @@ headless); לוגיקת `share-handler.js` (זיהוי URL מתוך share params
 - [x] `src/css/style.css` - נוספו `.link-card__icon-button`, `.link-card__edit-form`, `.link-card__title-input`.
 - [x] **נבדק בפועל בדפדפן (Playwright + Chromium headless, שרת סטטי מקומי)**: זרימת "פתח עריכה → שנה כותרת → שמור" מעדכנת את הכרטיס ואת ה-localStorage; זרימת "פתח עריכה → שנה → ביטול" משאירה את הכותרת המקורית; מחיקה עדיין עובדת אחרי השינוי. אין שגיאות קונסול חדשות (רק 404 צפוי של Service Worker כי השרת המקומי לא הוגש תחת `/linkstop/`).
 - [x] הועלה מספר גרסה ב-`index.html` מ-11 ל-**12**.
+- [x] **המשתמש אישר בפועל שכפתור העריכה עובד** (2026-09-18).
+
+## תצוגת מחיקה מעוצבת (2026-09-18)
+- [x] **בקשת המשתמש**: להחליף את `confirm()` הגנרי של הדפדפן (שהיה בשימוש לאישור מחיקת קישור) בדיאלוג מעוצב בהתאם לעיצוב האפליקציה.
+- [x] נוסף `<div id="confirm-overlay">` ל-`index.html` - שכבת רקע + כרטיס דיאלוג עם `role="alertdialog"`, `aria-modal="true"`, `aria-labelledby`/`aria-describedby` (מודל אמיתי - נגישות רלוונטית לפי כללי CLAUDE.md).
+- [x] נוספו סטיילים ל-`src/css/style.css`: `.confirm-overlay`, `.confirm-dialog` (וכפתורים `--ghost`/`--danger`), בפלטת הצבעים הקיימת.
+- [x] `src/js/app.js` - נוספה `confirmDialog(message)` שמחזירה `Promise<boolean>`: פותחת את הדיאלוג עם הכותרת הספציפית של הקישור בהודעה, שומרת ומחזירה פוקוס לאלמנט שהיה פוקוס לפני הפתיחה, תומכת בביטול דרך Escape/לחיצה על הרקע. כפתור המחיקה בכרטיס עכשיו `await`-ים לתוצאה הזו במקום `confirm()`.
+- [x] **נמצא ותוקן באג בבדיקה (לפני שהגיע למשתמש)**: ה-CSS של `.confirm-overlay` הגדיר `display: flex` על המחלקה עצמה, מה שגבר על כלל ה-`[hidden] { display: none }` המובנה של הדפדפן (שתי הסלקטורים באותה specificity, וה-CSS שלנו נטען אחרון) - כתוצאה מזה הדיאלוג "נעל" בלחיצה בכל האתר גם כשהיה `hidden`. תוקן בהוספת `.confirm-overlay[hidden] { display: none; }` מפורש. התיקון אומת ב-Playwright headless.
+- [x] הועלה מספר גרסה ב-`index.html` מ-12 ל-**13**.
 
 ## Files Changed
 - `PROJECT_STATE.md` — עודכן
