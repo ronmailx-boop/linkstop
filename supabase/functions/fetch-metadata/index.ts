@@ -170,13 +170,11 @@ async function fetchAndExtract(targetUrl: string, hostname: string, userAgent: s
     });
 
     if (!pageResponse.ok) {
-      console.log(`[debug] ${hostname}: upstream status ${pageResponse.status}, UA=${userAgent.slice(0, 20)}`);
       throw new Error(`upstream responded with ${pageResponse.status}`);
     }
 
     const contentType = pageResponse.headers.get("content-type") || "";
     if (!contentType.includes("text/html")) {
-      console.log(`[debug] ${hostname}: content-type "${contentType}" is not html, UA=${userAgent.slice(0, 20)}`);
       throw new Error("target is not an html page");
     }
 
@@ -209,12 +207,6 @@ async function fetchAndExtract(targetUrl: string, hostname: string, userAgent: s
       image = image || productData.image;
       description = description || productData.description;
     }
-
-    console.log(
-      `[debug] ${hostname}: UA=${userAgent.slice(0, 20)} bytes=${receivedBytes} title="${title.slice(0, 40)}" hasImage=${!!image} hasJsonLd=${
-        html.includes("application/ld+json")
-      } snippet="${html.slice(0, 200).replace(/\s+/g, " ")}"`,
-    );
 
     return {
       title,
