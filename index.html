@@ -14,7 +14,7 @@
 <body>
   <header class="app-header">
     <h1 class="app-header__title">LinkStop</h1>
-    <p class="app-header__version">גרסה 13</p>
+    <p class="app-header__version">גרסה 14</p>
   </header>
 
   <main class="app-main">
@@ -32,6 +32,17 @@
       <button id="add-button" type="submit">הוסף</button>
     </form>
     <p id="form-status" class="form-status" role="status" aria-live="polite"></p>
+
+    <div id="search-bar" class="search-bar" hidden>
+      <label for="search-input" class="visually-hidden">חפש בין הקישורים השמורים</label>
+      <input
+        id="search-input"
+        type="search"
+        inputmode="search"
+        placeholder="חפש קישור..."
+        autocomplete="off"
+      />
+    </div>
 
     <p id="empty-state" class="empty-state" hidden>
       עדיין לא שמרת קישורים. שתף קישור מוואטסאפ, פייסבוק או כרום ובחר ב-LinkStop, או הדבק קישור למעלה.

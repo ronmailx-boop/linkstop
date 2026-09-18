@@ -13,6 +13,11 @@ const formEl = document.getElementById("add-link-form");
 const inputEl = document.getElementById("url-input");
 const addButtonEl = document.getElementById("add-button");
 const statusEl = document.getElementById("form-status");
+const searchBarEl = document.getElementById("search-bar");
+const searchInputEl = document.getElementById("search-input");
+
+const EMPTY_MESSAGE_DEFAULT = emptyStateEl.textContent.trim();
+const EMPTY_MESSAGE_NO_RESULTS = "לא נמצאו קישורים התואמים לחיפוש";
 
 const confirmOverlayEl = document.getElementById("confirm-overlay");
 const confirmMessageEl = document.getElementById("confirm-dialog-message");
@@ -72,6 +77,14 @@ function hostnameOf(url) {
 // כשאין כותרת/תמונה אמיתיות (חילוץ אוטומטי נכשל, למשל בגלל הגנת אנטי-בוט של האתר),
 // אפשר לערוך את הכותרת ידנית - נשמר בלינק הנוכחי הזה בלבד עד שהמשתמש ילחץ על עריכה.
 let editingId = null;
+
+let searchTerm = "";
+
+function filterLinks(links, term) {
+  const query = term.trim().toLowerCase();
+  if (!query) return links;
+  return links.filter((link) => `${link.title} ${hostnameOf(link.url)}`.toLowerCase().includes(query));
+}
 
 function buildThumbnail(link) {
   if (link.image && isValidHttpUrl(link.image)) {
@@ -189,10 +202,13 @@ function buildCard(link) {
 }
 
 function render() {
-  const links = getLinks();
+  const allLinks = getLinks();
+  const links = filterLinks(allLinks, searchTerm);
   listEl.innerHTML = "";
 
+  searchBarEl.hidden = allLinks.length === 0;
   emptyStateEl.hidden = links.length > 0;
+  emptyStateEl.textContent = allLinks.length === 0 ? EMPTY_MESSAGE_DEFAULT : EMPTY_MESSAGE_NO_RESULTS;
 
   for (const link of links) {
     listEl.appendChild(buildCard(link));
@@ -234,6 +250,11 @@ formEl.addEventListener("submit", async (event) => {
   } finally {
     addButtonEl.disabled = false;
   }
+});
+
+searchInputEl.addEventListener("input", () => {
+  searchTerm = searchInputEl.value;
+  render();
 });
 
 if ("serviceWorker" in navigator) {
